@@ -1,46 +1,25 @@
-// Borra submissions del formulario de Netlify Forms a partir de una lista de IDs.
-// Se usa desde el botón "Borrar registros de prueba" del panel admin para que
-// el borrado sea real (no solo local) y no vuelvan a aparecer al actualizar.
-//
-// Necesita la variable de entorno NETLIFY_TOKEN (Personal Access Token).
+// netlify/functions/delete-leads.js
+// Borra leads específicos (por ID) desde el panel admin.
 
-exports.handler = async function (event) {
+const { getStore } = require("@netlify/blobs");
+
+exports.handler = async function (event, context) {
   if (event.httpMethod !== "POST") {
-    return { statusCode: 405, body: "Method not allowed" };
+    return { statusCode: 405, body: "Method Not Allowed" };
   }
 
   try {
-    var TOKEN = process.env.NETLIFY_TOKEN;
-    if (!TOKEN) {
-      return {
-        statusCode: 500,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ error: "Falta la variable de entorno NETLIFY_TOKEN." })
-      };
+    const { ids } = JSON.parse(event.body);
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return { statusCode: 400, body: JSON.stringify({ error: "No se recibieron IDs." }) };
     }
 
-    var body = JSON.parse(event.body || "{}");
-    var ids = Array.isArray(body.ids) ? body.ids : [];
+    const store = getStore("leads");
+    await Promise.all(ids.map((id) => store.delete(id)));
 
-    var results = [];
-    for (var i = 0; i < ids.length; i++) {
-      var res = await fetch("https://api.netlify.com/api/v1/submissions/" + ids[i], {
-        method: "DELETE",
-        headers: { Authorization: "Bearer " + TOKEN }
-      });
-      results.push({ id: ids[i], ok: res.ok });
-    }
-
-    return {
-      statusCode: 200,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ results: results })
-    };
+    return { statusCode: 200, body: JSON.stringify({ ok: true, deleted: ids.length }) };
   } catch (err) {
-    return {
-      statusCode: 500,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ error: err.message })
-    };
+    console.error("delete-leads error:", err);
+    return { statusCode: 500, body: JSON.stringify({ error: err.message }) };
   }
 };
