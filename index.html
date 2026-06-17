@@ -576,19 +576,10 @@
     });
   }
 
-  // Combina los leads centralizados (Netlify) con los guardados localmente que
-  // todavía no estén ahí (por ejemplo, si se cargaron sin conexión).
+  // Trae los leads centralizados de Netlify Forms.
+  // Solo usa localStorage como fallback si la llamada remota falla completamente.
   function getMergedLeads(){
     return fetchRemoteLeads().then(function(remote){
-      var local = getLeads();
-      var seen = {};
-      remote.forEach(function(l){
-        seen[(l.mail||"")+"|"+(l.whatsapp||"")+"|"+(l.fecha||"")] = true;
-      });
-      local.forEach(function(l){
-        var key = (l.mail||"")+"|"+(l.whatsapp||"")+"|"+(l.fecha||"");
-        if(!seen[key]) remote.push(l);
-      });
       return remote;
     }).catch(function(err){
       console.warn("No se pudieron traer los leads centralizados, se muestran solo los locales:", err);
