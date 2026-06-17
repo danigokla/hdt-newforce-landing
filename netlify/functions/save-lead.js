@@ -1,4 +1,4 @@
-// netlify/functions/save-lead.js
+// netlify/functions/submission-created.js
 // Se ejecuta automáticamente cada vez que Netlify Forms recibe un nuevo lead.
 // Guarda el lead en Netlify Blobs para que el panel admin pueda leerlo desde cualquier dispositivo.
 
