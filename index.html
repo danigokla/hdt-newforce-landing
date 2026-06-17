@@ -750,6 +750,11 @@
       return;
     }
 
+    // Evitar doble envío
+    var btn = document.getElementById("btnSubmit");
+    if(btn.disabled) return;
+    btn.disabled = true;
+
     var now = new Date();
     var fecha = now.toLocaleString("es-AR");
 
@@ -779,6 +784,7 @@
   // ===================== RESTART =====================
   document.getElementById("btnRestart").addEventListener("click", function(){
     formData = { nombre:"", apellido:"", provincia:"", localidad:"", whatsapp:"", mail:"", rubro:"", solucion:"", aplicaciones:[], equipo:"" };
+    document.getElementById("btnSubmit").disabled = false; // re-habilitar para el próximo visitante
 
     document.getElementById("in-nombre").value="";
     document.getElementById("in-apellido").value="";
