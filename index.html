@@ -1,0 +1,1017 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>HDT NewForce | Soluciones DJI Enterprise</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root{
+    --bg-1:#000000;
+    --bg-2:#0a0a0a;
+    --bg-3:#141414;
+    --blue:#ffffff;
+    --cyan:#ffffff;
+    --white:#ffffff;
+    --gray-100:#e6e6e6;
+    --gray-300:#a3a3a3;
+    --gray-600:#5c5c5c;
+    --card-bg:rgba(255,255,255,0.04);
+    --card-border:rgba(255,255,255,0.14);
+    --danger:#ff5566;
+    --success:#21d07a;
+    --radius:18px;
+    --radius-sm:12px;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{
+    font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Helvetica,Arial,sans-serif;
+    background:
+      radial-gradient(circle at 20% 0%, rgba(255,255,255,0.08), transparent 50%),
+      radial-gradient(circle at 80% 100%, rgba(255,255,255,0.05), transparent 50%),
+      linear-gradient(160deg, var(--bg-1) 0%, var(--bg-2) 55%, var(--bg-3) 100%);
+    color:var(--white);
+    min-height:100vh;
+    width:100%;
+    overflow-x:hidden;
+  }
+  #app{min-height:100vh; display:flex; flex-direction:column;}
+  .screen{
+    display:none;
+    flex:1;
+    width:100%;
+    max-width:560px;
+    margin:0 auto;
+    padding:28px 20px 40px;
+    flex-direction:column;
+    animation:fadeIn .35s ease;
+  }
+  .screen.active{display:flex;}
+  @keyframes fadeIn{from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:translateY(0);}}
+
+  /* top-left hidden tap zone */
+  #hiddenTapZone{
+    position:fixed; top:0; left:0; width:70px; height:70px; z-index:9999;
+  }
+
+  .brand-row{display:flex; align-items:center; gap:10px; margin-bottom:18px;}
+  .brand-dot{width:10px; height:10px; border-radius:50%; background:linear-gradient(135deg,var(--cyan),var(--blue)); box-shadow:0 0 14px var(--cyan);}
+  .brand-name{font-size:14px; letter-spacing:2px; font-weight:700; color:var(--gray-100); text-transform:uppercase;}
+
+  .progress-wrap{margin-bottom:22px;}
+  .progress-label{font-size:12px; color:var(--gray-300); margin-bottom:8px; letter-spacing:.5px;}
+  .progress-bar{height:6px; background:rgba(255,255,255,0.08); border-radius:6px; overflow:hidden;}
+  .progress-fill{height:100%; background:linear-gradient(90deg,var(--blue),var(--cyan)); border-radius:6px; transition:width .35s ease;}
+
+  h1{font-size:26px; line-height:1.25; font-weight:800; margin-bottom:10px; background:linear-gradient(90deg,var(--white),var(--gray-100)); -webkit-background-clip:text; background-clip:text;}
+  .hero-tag{display:inline-block; font-size:11px; letter-spacing:1.5px; color:var(--white); border:1px solid rgba(255,255,255,0.4); padding:5px 12px; border-radius:30px; margin-bottom:16px; text-transform:uppercase; background:rgba(255,255,255,0.06);}
+  p.subtitle{font-size:15px; color:var(--gray-300); line-height:1.55; margin-bottom:24px;}
+  h2.step-title{font-size:20px; font-weight:700; margin-bottom:6px;}
+  p.step-sub{font-size:13.5px; color:var(--gray-300); margin-bottom:18px;}
+
+  .field{margin-bottom:14px;}
+  .field label{display:block; font-size:13px; color:var(--gray-100); margin-bottom:6px; font-weight:600;}
+  .field input, .field select{
+    width:100%; padding:14px 14px; border-radius:var(--radius-sm); border:1px solid var(--card-border);
+    background:rgba(255,255,255,0.05); color:var(--white); font-size:15px; outline:none;
+    transition:border-color .2s, background .2s;
+  }
+  .field input::placeholder{color:var(--gray-600);}
+  .field input:focus, .field select:focus{border-color:var(--cyan); background:rgba(255,255,255,0.08);}
+  .field select{appearance:none;}
+  .field-error{color:var(--danger); font-size:12px; margin-top:5px; display:none;}
+  .field.has-error input, .field.has-error select{border-color:var(--danger);}
+  .field.has-error .field-error{display:block;}
+
+  .row-2{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+
+  .cards-grid{display:flex; flex-direction:column; gap:12px; margin-bottom:8px;}
+  .opt-card{
+    border:1px solid var(--card-border); background:var(--card-bg); border-radius:var(--radius);
+    padding:16px 16px; cursor:pointer; transition:all .18s ease; display:flex; flex-direction:column; gap:4px;
+  }
+  .opt-card:hover{border-color:rgba(255,255,255,0.4); background:rgba(255,255,255,0.06);}
+  .opt-card.selected{
+    border-color:var(--white); background:rgba(255,255,255,0.1);
+    box-shadow:0 0 0 1px rgba(255,255,255,0.6), 0 8px 24px rgba(255,255,255,0.1);
+  }
+  .opt-card .opt-title{font-size:16px; font-weight:700; color:var(--white); display:flex; align-items:center; justify-content:space-between;}
+  .opt-card .opt-desc{font-size:13px; color:var(--gray-300); line-height:1.4;}
+  .opt-card .check-circle{width:20px; height:20px; border-radius:50%; border:2px solid var(--gray-600); flex-shrink:0; position:relative;}
+  .opt-card.selected .check-circle{border-color:var(--white); background:var(--white);}
+  .opt-card.selected .check-circle::after{content:''; position:absolute; left:6px; top:2px; width:5px; height:9px; border-right:2px solid #000; border-bottom:2px solid #000; transform:rotate(40deg);}
+
+  .simple-list{display:flex; flex-direction:column; gap:10px;}
+  .opt-simple{
+    border:1px solid var(--card-border); background:var(--card-bg); border-radius:var(--radius-sm);
+    padding:14px 16px; cursor:pointer; font-size:14.5px; font-weight:600; color:var(--white);
+    display:flex; align-items:center; justify-content:space-between; transition:all .18s ease;
+  }
+  .opt-simple:hover{border-color:rgba(255,255,255,0.35);}
+  .opt-simple.selected{border-color:var(--white); background:rgba(255,255,255,0.1); box-shadow:0 0 0 1px rgba(255,255,255,0.6);}
+  .opt-simple .check-circle{width:18px; height:18px; border-radius:50%; border:2px solid var(--gray-600); flex-shrink:0; position:relative;}
+  .opt-simple.selected .check-circle{border-color:var(--white); background:var(--white);}
+  .opt-simple.selected .check-circle::after{content:''; position:absolute; left:5px; top:1px; width:4px; height:8px; border-right:2px solid #000; border-bottom:2px solid #000; transform:rotate(40deg);}
+
+  /* Multi-select chip used in step 3 */
+  .opt-simple.multi .check-circle{border-radius:5px;}
+  .opt-simple.multi.selected .check-circle{border-radius:5px;}
+
+  /* Equipment cards with photo (step 4) */
+  .equipo-grid{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+  .equipo-card{
+    position:relative; border:1px solid var(--card-border); background:var(--card-bg); border-radius:var(--radius);
+    padding:12px; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:10px; transition:all .18s ease;
+  }
+  .equipo-card:hover{border-color:rgba(255,255,255,0.4);}
+  .equipo-card.selected{border-color:var(--white); background:rgba(255,255,255,0.1); box-shadow:0 0 0 1px rgba(255,255,255,0.6);}
+  .equipo-photo{width:100%; height:96px; border-radius:10px; background:rgba(255,255,255,0.05); display:flex; align-items:center; justify-content:center; overflow:hidden;}
+  .equipo-photo img{width:100%; height:100%; object-fit:contain; padding:8px;}
+  .equipo-fallback{width:100%; height:100%; display:flex; align-items:center; justify-content:center; color:rgba(255,255,255,0.55);}
+  .equipo-name{font-size:13px; font-weight:700; text-align:center; color:var(--white); line-height:1.3;}
+  .equipo-card .check-circle{
+    position:absolute; top:10px; right:10px; width:18px; height:18px; border-radius:50%;
+    border:2px solid var(--gray-600); background:rgba(0,0,0,0.4);
+  }
+  .equipo-card.selected .check-circle{border-color:var(--white); background:var(--white);}
+  .equipo-card.selected .check-circle::after{content:''; position:absolute; left:4px; top:0px; width:4px; height:8px; border-right:2px solid #000; border-bottom:2px solid #000; transform:rotate(40deg);}
+  @media (max-width:360px){
+    .equipo-grid{grid-template-columns:1fr;}
+  }
+
+  .btn-group{margin-top:auto; display:flex; gap:10px; padding-top:18px;}
+  .btn{
+    flex:1; padding:16px 18px; border-radius:14px; border:none; font-size:15.5px; font-weight:700;
+    cursor:pointer; transition:transform .12s ease, opacity .2s; text-align:center;
+  }
+  .btn:active{transform:scale(0.97);}
+  .btn-primary{background:var(--white); color:#000000; box-shadow:0 8px 24px rgba(255,255,255,0.18);}
+  .btn-secondary{background:rgba(255,255,255,0.06); color:var(--gray-100); border:1px solid var(--card-border); flex:0 0 110px;}
+  .btn:disabled{opacity:.45; cursor:not-allowed;}
+
+  .error-banner{background:rgba(255,85,102,0.12); border:1px solid rgba(255,85,102,0.4); color:#ffb3bb; font-size:13px; padding:10px 14px; border-radius:10px; margin-bottom:14px; display:none;}
+  .error-banner.show{display:block;}
+
+  /* Thank you screen */
+  .thanks-wrap{flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; gap:14px;}
+  .thanks-icon{width:74px; height:74px; border-radius:50%; background:var(--white); color:#000; display:flex; align-items:center; justify-content:center; font-size:34px; box-shadow:0 0 40px rgba(255,255,255,0.3); margin-bottom:8px;}
+  .thanks-wrap h1{font-size:24px;}
+  .thanks-wrap p{color:var(--gray-300); font-size:14.5px; max-width:420px; line-height:1.6;}
+  .thanks-final{color:var(--white); font-size:13px; letter-spacing:.5px; margin-top:6px; font-weight:600;}
+
+  /* Admin login */
+  .admin-login-wrap{flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:18px; text-align:center;}
+  .admin-login-card{background:var(--card-bg); border:1px solid var(--card-border); border-radius:var(--radius); padding:30px 26px; width:100%; max-width:360px;}
+  .admin-login-card h2{font-size:18px; margin-bottom:18px;}
+  .admin-error{color:var(--danger); font-size:13px; margin-top:10px; display:none;}
+  .admin-error.show{display:block;}
+
+  /* Admin panel */
+  #adminScreen{max-width:1200px; width:100%; padding:24px 18px 60px;}
+  .admin-header{display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-bottom:20px;}
+  .admin-header h1{font-size:20px;}
+  .admin-actions{display:flex; gap:10px; flex-wrap:wrap;}
+  .btn-sm{padding:10px 16px; font-size:13.5px; border-radius:10px; border:none; cursor:pointer; font-weight:700;}
+  .btn-update{background:rgba(255,255,255,0.08); color:var(--white); border:1px solid var(--card-border);}
+  .btn-excel{background:linear-gradient(90deg,var(--success),#1bb567); color:#06251a;}
+  .btn-danger{background:rgba(255,85,102,0.15); color:#ffb3bb; border:1px solid rgba(255,85,102,0.4);}
+  .btn-logout{background:transparent; color:var(--gray-300); border:1px solid var(--card-border);}
+
+  .metrics-row{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; margin-bottom:20px;}
+  .metric-card{background:var(--card-bg); border:1px solid var(--card-border); border-radius:var(--radius-sm); padding:16px;}
+  .metric-card .metric-val{font-size:26px; font-weight:800; color:var(--cyan);}
+  .metric-card .metric-label{font-size:12px; color:var(--gray-300); margin-top:4px;}
+
+  .filters-row{display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:10px; margin-bottom:18px;}
+  .filters-row select, .filters-row input{
+    padding:10px 12px; border-radius:10px; border:1px solid var(--card-border); background:rgba(255,255,255,0.05);
+    color:var(--white); font-size:13.5px;
+  }
+
+  .table-wrap{overflow-x:auto; border:1px solid var(--card-border); border-radius:var(--radius-sm); background:var(--card-bg);}
+  table{width:100%; border-collapse:collapse; min-width:1000px;}
+  th{text-align:left; font-size:12px; text-transform:uppercase; letter-spacing:.5px; color:var(--cyan); padding:12px 14px; border-bottom:1px solid var(--card-border); white-space:nowrap;}
+  td{padding:11px 14px; font-size:13px; color:var(--gray-100); border-bottom:1px solid rgba(255,255,255,0.04); white-space:nowrap;}
+  tr:hover td{background:rgba(255,255,255,0.03);}
+  .empty-state{padding:40px; text-align:center; color:var(--gray-300); font-size:14px;}
+
+  @media (min-width:680px){
+    h1{font-size:30px;}
+  }
+</style>
+</head>
+<body>
+
+<!-- Form estático oculto: Netlify lo detecta en el deploy para crear el formulario "leads-hdt-newforce" -->
+<form name="leads-hdt-newforce" method="POST" data-netlify="true" netlify-honeypot="bot-field" action="/" style="position:absolute; left:-9999px;">
+  <input type="hidden" name="form-name" value="leads-hdt-newforce" />
+  <p style="display:none;"><label>No completar: <input name="bot-field" /></label></p>
+  <input type="text" name="fecha" />
+  <input type="text" name="nombre" />
+  <input type="text" name="apellido" />
+  <input type="text" name="provincia" />
+  <input type="text" name="localidad" />
+  <input type="text" name="whatsapp" />
+  <input type="email" name="mail" />
+  <input type="text" name="rubro" />
+  <input type="text" name="solucion" />
+  <input type="text" name="aplicacion" />
+  <input type="text" name="equipo" />
+</form>
+
+<div id="hiddenTapZone"></div>
+<div id="app">
+
+  <!-- SCREEN 1: Datos del lead -->
+  <section class="screen active" id="screen1">
+    <div class="brand-row"><div class="brand-dot"></div><div class="brand-name">HDT NewForce</div></div>
+    <div class="progress-wrap">
+      <div class="progress-label">Paso 1 de 4</div>
+      <div class="progress-bar"><div class="progress-fill" style="width:25%"></div></div>
+    </div>
+    <span class="hero-tag">DJI Enterprise</span>
+    <h1>Tecnología DJI Enterprise para llevar tus operaciones al próximo nivel</h1>
+    <p class="subtitle">HDT NewForce acerca soluciones con drones profesionales para seguridad, geoespacial e inspecciones críticas. Dejanos tus datos y un especialista te contactará para asesorarte.</p>
+
+    <div class="error-banner" id="s1ErrorBanner">Completá todos los campos obligatorios para continuar.</div>
+
+    <div class="row-2">
+      <div class="field" id="f-nombre">
+        <label>Nombre *</label>
+        <input type="text" id="in-nombre" placeholder="Tu nombre">
+        <div class="field-error">Ingresá tu nombre.</div>
+      </div>
+      <div class="field" id="f-apellido">
+        <label>Apellido *</label>
+        <input type="text" id="in-apellido" placeholder="Tu apellido">
+        <div class="field-error">Ingresá tu apellido.</div>
+      </div>
+    </div>
+
+    <div class="row-2">
+      <div class="field" id="f-provincia">
+        <label>Provincia *</label>
+        <select id="in-provincia">
+          <option value="">Seleccioná tu provincia</option>
+          <option>Buenos Aires</option>
+          <option>Ciudad Autónoma de Buenos Aires</option>
+          <option>Catamarca</option>
+          <option>Chaco</option>
+          <option>Chubut</option>
+          <option>Córdoba</option>
+          <option>Corrientes</option>
+          <option>Entre Ríos</option>
+          <option>Formosa</option>
+          <option>Jujuy</option>
+          <option>La Pampa</option>
+          <option>La Rioja</option>
+          <option>Mendoza</option>
+          <option>Misiones</option>
+          <option>Neuquén</option>
+          <option>Río Negro</option>
+          <option>Salta</option>
+          <option>San Juan</option>
+          <option>San Luis</option>
+          <option>Santa Cruz</option>
+          <option>Santa Fe</option>
+          <option>Santiago del Estero</option>
+          <option>Tierra del Fuego</option>
+          <option>Tucumán</option>
+        </select>
+        <div class="field-error">Seleccioná tu provincia.</div>
+      </div>
+      <div class="field" id="f-localidad">
+        <label>Localidad *</label>
+        <input type="text" id="in-localidad" placeholder="Ej: La Plata">
+        <div class="field-error">Ingresá tu localidad.</div>
+      </div>
+    </div>
+
+    <div class="field" id="f-whatsapp">
+      <label>WhatsApp *</label>
+      <input type="tel" id="in-whatsapp" placeholder="Ej: 11 2345 6789">
+      <div class="field-error">Ingresá un número de WhatsApp válido (mínimo 8 dígitos).</div>
+    </div>
+
+    <div class="field" id="f-mail">
+      <label>Mail *</label>
+      <input type="email" id="in-mail" placeholder="tu@mail.com">
+      <div class="field-error">Ingresá un mail válido.</div>
+    </div>
+
+    <div class="field" id="f-rubro">
+      <label>Rubro / tipo de organización *</label>
+      <select id="in-rubro">
+        <option value="">Seleccioná una opción</option>
+        <option>Seguridad privada</option>
+        <option>Fuerzas de seguridad / gobierno</option>
+        <option>Defensa civil / emergencias</option>
+        <option>Topografía / geoespacial</option>
+        <option>Construcción</option>
+        <option>Minería</option>
+        <option>Oil & Gas</option>
+        <option>Energía eléctrica</option>
+        <option>Energías renovables</option>
+        <option>Infraestructura civil</option>
+        <option>Otro</option>
+      </select>
+      <div class="field-error">Seleccioná un rubro.</div>
+    </div>
+
+    <div class="btn-group">
+      <button class="btn btn-primary" id="btnStep1Next">Continuar</button>
+    </div>
+  </section>
+
+  <!-- SCREEN 2: Interés principal -->
+  <section class="screen" id="screen2">
+    <div class="brand-row"><div class="brand-dot"></div><div class="brand-name">HDT NewForce</div></div>
+    <div class="progress-wrap">
+      <div class="progress-label">Paso 2 de 4</div>
+      <div class="progress-bar"><div class="progress-fill" style="width:50%"></div></div>
+    </div>
+    <h2 class="step-title">¿Qué tipo de solución estás buscando?</h2>
+    <p class="step-sub">Elegí la categoría que mejor se ajusta a tu operación.</p>
+    <div class="error-banner" id="s2ErrorBanner">Seleccioná una opción para continuar.</div>
+
+    <div class="cards-grid" id="solucionCards">
+      <div class="opt-card" data-value="Seguridad">
+        <div class="opt-title">Seguridad <div class="check-circle"></div></div>
+        <div class="opt-desc">Drones para vigilancia, patrullaje, monitoreo y primera respuesta.</div>
+      </div>
+      <div class="opt-card" data-value="Geoespacial">
+        <div class="opt-title">Geoespacial <div class="check-circle"></div></div>
+        <div class="opt-desc">Soluciones para mapeo, relevamientos, modelos 2D/3D y planificación territorial.</div>
+      </div>
+      <div class="opt-card" data-value="Inspecciones">
+        <div class="opt-title">Inspecciones <div class="check-circle"></div></div>
+        <div class="opt-desc">Drones para inspección de activos, estructuras, energía, oil & gas e infraestructura.</div>
+      </div>
+    </div>
+
+    <div class="btn-group">
+      <button class="btn btn-secondary" id="btnStep2Back">Volver</button>
+      <button class="btn btn-primary" id="btnStep2Next">Continuar</button>
+    </div>
+  </section>
+
+  <!-- SCREEN 3: Aplicación específica -->
+  <section class="screen" id="screen3">
+    <div class="brand-row"><div class="brand-dot"></div><div class="brand-name">HDT NewForce</div></div>
+    <div class="progress-wrap">
+      <div class="progress-label">Paso 3 de 4</div>
+      <div class="progress-bar"><div class="progress-fill" style="width:75%"></div></div>
+    </div>
+    <h2 class="step-title" id="s3Question">¿En qué aplicación estás interesado?</h2>
+    <p class="step-sub">Podés seleccionar una o más opciones.</p>
+    <div class="error-banner" id="s3ErrorBanner">Seleccioná al menos una opción para continuar.</div>
+
+    <div class="simple-list" id="aplicacionList"></div>
+
+    <div class="btn-group">
+      <button class="btn btn-secondary" id="btnStep3Back">Volver</button>
+      <button class="btn btn-primary" id="btnStep3Next">Continuar</button>
+    </div>
+  </section>
+
+  <!-- SCREEN 4: Equipamiento -->
+  <section class="screen" id="screen4">
+    <div class="brand-row"><div class="brand-dot"></div><div class="brand-name">HDT NewForce</div></div>
+    <div class="progress-wrap">
+      <div class="progress-label">Paso 4 de 4</div>
+      <div class="progress-bar"><div class="progress-fill" style="width:100%"></div></div>
+    </div>
+    <h2 class="step-title">¿Sobre qué equipamiento querés recibir información?</h2>
+    <p class="step-sub">Elegí el equipo de tu interés, o pedí asesoramiento si todavía no lo sabés.</p>
+    <div class="error-banner" id="s4ErrorBanner">Seleccioná una opción para continuar.</div>
+
+    <div class="equipo-grid" id="equipoList">
+      <div class="equipo-card" data-value="DJI Matrice 4E">
+        <div class="equipo-photo"><img src="images/matrice-4e.webp" alt="DJI Matrice 4E" onerror="imgFallback(this)"></div>
+        <div class="equipo-name">DJI Matrice 4E</div>
+        <div class="check-circle"></div>
+      </div>
+      <div class="equipo-card" data-value="DJI Matrice 4T">
+        <div class="equipo-photo"><img src="images/matrice-4t.png" alt="DJI Matrice 4T" onerror="imgFallback(this)"></div>
+        <div class="equipo-name">DJI Matrice 4T</div>
+        <div class="check-circle"></div>
+      </div>
+      <div class="equipo-card" data-value="DJI Matrice 350 RTK">
+        <div class="equipo-photo"><img src="images/matrice-350-rtk.webp" alt="DJI Matrice 350 RTK" onerror="imgFallback(this)"></div>
+        <div class="equipo-name">DJI Matrice 350 RTK</div>
+        <div class="check-circle"></div>
+      </div>
+      <div class="equipo-card" data-value="DJI Dock 3">
+        <div class="equipo-photo"><img src="images/dock-3.jpg" alt="DJI Dock 3" onerror="imgFallback(this)"></div>
+        <div class="equipo-name">DJI Dock 3</div>
+        <div class="check-circle"></div>
+      </div>
+      <div class="equipo-card" data-value="Zenmuse H30T">
+        <div class="equipo-photo"><img src="images/zenmuse-h30t.jpg" alt="Zenmuse H30T" onerror="imgFallback(this)"></div>
+        <div class="equipo-name">Zenmuse H30T</div>
+        <div class="check-circle"></div>
+      </div>
+      <div class="equipo-card" data-value="Zenmuse P1">
+        <div class="equipo-photo"><img src="images/zenmuse-p1.jpg" alt="Zenmuse P1" onerror="imgFallback(this)"></div>
+        <div class="equipo-name">Zenmuse P1</div>
+        <div class="check-circle"></div>
+      </div>
+      <div class="equipo-card" data-value="Zenmuse L2">
+        <div class="equipo-photo"><img src="images/zenmuse-l2.jpg" alt="Zenmuse L2" onerror="imgFallback(this)"></div>
+        <div class="equipo-name">Zenmuse L2</div>
+        <div class="check-circle"></div>
+      </div>
+      <div class="equipo-card" data-value="No sé todavía, necesito asesoramiento">
+        <div class="equipo-photo"><img src="images/asesoramiento.jpg" alt="Asesoramiento" onerror="imgFallback(this)"></div>
+        <div class="equipo-name">No sé todavía, necesito asesoramiento</div>
+        <div class="check-circle"></div>
+      </div>
+    </div>
+
+    <div class="btn-group">
+      <button class="btn btn-secondary" id="btnStep4Back">Volver</button>
+      <button class="btn btn-primary" id="btnSubmit">Enviar consulta</button>
+    </div>
+  </section>
+
+  <!-- SCREEN 5: Gracias -->
+  <section class="screen" id="screenThanks">
+    <div class="thanks-wrap">
+      <div class="thanks-icon">✓</div>
+      <h1>¡Gracias por dejar tus datos!</h1>
+      <p>Un especialista de HDT NewForce se va a contactar para asesorarte sobre la solución DJI Enterprise más adecuada para tu operación.</p>
+      <div class="thanks-final">Tecnología aérea, soporte especializado y respaldo oficial para operaciones críticas.</div>
+      <div class="btn-group" style="margin-top:20px; max-width:280px;">
+        <button class="btn btn-primary" id="btnRestart">Volver al inicio</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ADMIN LOGIN -->
+  <section class="screen" id="adminLoginScreen">
+    <div class="admin-login-wrap">
+      <div class="admin-login-card">
+        <h2>Panel Admin — HDT NewForce</h2>
+        <div class="field" style="margin-bottom:0;">
+          <label>Ingresar clave</label>
+          <input type="password" id="adminPassInput" placeholder="••••••••">
+        </div>
+        <div class="admin-error" id="adminLoginError">Clave incorrecta. Intentá nuevamente.</div>
+        <div class="btn-group">
+          <button class="btn btn-primary" id="btnAdminLogin" style="margin-top:16px;">Entrar</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ADMIN PANEL -->
+  <section class="screen" id="adminScreen">
+    <div class="admin-header">
+      <h1>Panel Admin — Leads HDT NewForce</h1>
+      <div class="admin-actions">
+        <button class="btn-sm btn-update" id="btnRefresh">Actualizar</button>
+        <button class="btn-sm btn-excel" id="btnExcel">Descargar Excel</button>
+        <button class="btn-sm btn-danger" id="btnDeleteTest">Borrar registros de prueba</button>
+        <button class="btn-sm btn-logout" id="btnAdminLogout">Salir</button>
+      </div>
+    </div>
+
+    <div class="metrics-row">
+      <div class="metric-card"><div class="metric-val" id="metricTotal">0</div><div class="metric-label">Total de leads</div></div>
+      <div class="metric-card"><div class="metric-val" id="metricHoy">0</div><div class="metric-label">Leads cargados hoy</div></div>
+    </div>
+
+    <div class="filters-row">
+      <select id="filterProvincia"><option value="">Todas las provincias</option></select>
+      <select id="filterRubro"><option value="">Todos los rubros</option></select>
+      <select id="filterSolucion"><option value="">Todas las soluciones</option></select>
+      <select id="filterEquipo"><option value="">Todo el equipamiento</option></select>
+      <input type="text" id="filterSearch" placeholder="Buscar por nombre, apellido, mail o WhatsApp">
+    </div>
+
+    <div class="table-wrap">
+      <table id="leadsTable">
+        <thead>
+          <tr>
+            <th>Fecha</th><th>Nombre</th><th>Apellido</th><th>Provincia</th><th>Localidad</th>
+            <th>WhatsApp</th><th>Mail</th><th>Rubro</th><th>Solución</th><th>Aplicación</th><th>Equipamiento</th>
+          </tr>
+        </thead>
+        <tbody id="leadsTbody"></tbody>
+      </table>
+      <div class="empty-state" id="emptyState" style="display:none;">Todavía no hay leads cargados.</div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  // ===================== CONFIG =====================
+  var ADMIN_PASSWORD = "HDT2026"; // cambiar acá la clave de acceso al panel admin
+  var STORAGE_KEY = "hdt_newforce_leads";
+
+  // ===================== APLICACIONES POR SOLUCION =====================
+  var APLICACIONES = {
+    "Seguridad": [
+      "Vigilancia y patrullaje","Centros de monitoreo","Primera respuesta","Patrullaje automatizado",
+      "Lucha contra el fuego","Defensa civil","Búsqueda y rescate","Reconstrucción de escena"
+    ],
+    "Geoespacial": [
+      "Topografía y mapeo","Reconocimiento de campos","Relevamiento catastral","Planificación urbana",
+      "Monitoreo de obras","Movimiento de suelo / terraplén","Minería","Modelos 2D / 3D"
+    ],
+    "Inspecciones": [
+      "Energía eléctrica","Subestaciones","Tendidos eléctricos","Oil & Gas","Gasoductos / oleoductos",
+      "Instalaciones industriales","Paneles solares","Parques eólicos","Puentes","Techos / infraestructura civil"
+    ]
+  };
+  var PREGUNTAS = {
+    "Seguridad":"¿En qué aplicación estás interesado?",
+    "Geoespacial":"¿Qué tipo de relevamiento necesitás hacer?",
+    "Inspecciones":"¿Qué tipo de inspección te interesa?"
+  };
+
+  // ===================== STATE =====================
+  var formData = {
+    nombre:"", apellido:"", provincia:"", localidad:"", whatsapp:"", mail:"", rubro:"",
+    solucion:"", aplicaciones:[], equipo:""
+  };
+
+  function showScreen(id){
+    document.querySelectorAll(".screen").forEach(function(s){ s.classList.remove("active"); });
+    document.getElementById(id).classList.add("active");
+    window.scrollTo(0,0);
+  }
+
+  // ===================== LEADS STORAGE =====================
+  function getLeads(){
+    try{
+      var raw = localStorage.getItem(STORAGE_KEY);
+      return raw ? JSON.parse(raw) : [];
+    }catch(e){ return []; }
+  }
+  function saveLeads(leads){
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(leads));
+  }
+  function addLead(lead){
+    var leads = getLeads();
+    leads.push(lead);
+    saveLeads(leads);
+  }
+
+  // ===================== LEADS CENTRALIZADOS (Netlify Functions) =====================
+  // adminLeadsCache guarda la lista combinada (remota + local) que usa el panel admin.
+  var adminLeadsCache = [];
+
+  function fetchRemoteLeads(){
+    return fetch("/.netlify/functions/get-leads").then(function(res){
+      if(!res.ok) throw new Error("HTTP "+res.status);
+      return res.json();
+    }).then(function(data){
+      if(data && data.error) throw new Error(data.error);
+      return Array.isArray(data) ? data : [];
+    });
+  }
+
+  // Combina los leads centralizados (Netlify) con los guardados localmente que
+  // todavía no estén ahí (por ejemplo, si se cargaron sin conexión).
+  function getMergedLeads(){
+    return fetchRemoteLeads().then(function(remote){
+      var local = getLeads();
+      var seen = {};
+      remote.forEach(function(l){
+        seen[(l.mail||"")+"|"+(l.whatsapp||"")+"|"+(l.fecha||"")] = true;
+      });
+      local.forEach(function(l){
+        var key = (l.mail||"")+"|"+(l.whatsapp||"")+"|"+(l.fecha||"");
+        if(!seen[key]) remote.push(l);
+      });
+      return remote;
+    }).catch(function(err){
+      console.warn("No se pudieron traer los leads centralizados, se muestran solo los locales:", err);
+      return getLeads();
+    });
+  }
+
+  // ===================== SCREEN 1: VALIDATION =====================
+  function clearFieldError(fieldId){
+    document.getElementById(fieldId).classList.remove("has-error");
+  }
+  function setFieldError(fieldId){
+    document.getElementById(fieldId).classList.add("has-error");
+  }
+
+  function validateEmail(email){
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  }
+  function validatePhone(phone){
+    var digits = phone.replace(/\D/g,"");
+    return digits.length >= 8;
+  }
+
+  document.getElementById("btnStep1Next").addEventListener("click", function(){
+    var nombre = document.getElementById("in-nombre").value.trim();
+    var apellido = document.getElementById("in-apellido").value.trim();
+    var provincia = document.getElementById("in-provincia").value.trim();
+    var localidad = document.getElementById("in-localidad").value.trim();
+    var whatsapp = document.getElementById("in-whatsapp").value.trim();
+    var mail = document.getElementById("in-mail").value.trim();
+    var rubro = document.getElementById("in-rubro").value;
+
+    var valid = true;
+    var banner = document.getElementById("s1ErrorBanner");
+
+    [["f-nombre",nombre],["f-apellido",apellido],["f-provincia",provincia],["f-localidad",localidad]].forEach(function(pair){
+      if(!pair[1]){ setFieldError(pair[0]); valid=false; } else { clearFieldError(pair[0]); }
+    });
+
+    if(!whatsapp || !validatePhone(whatsapp)){ setFieldError("f-whatsapp"); valid=false; } else { clearFieldError("f-whatsapp"); }
+    if(!mail || !validateEmail(mail)){ setFieldError("f-mail"); valid=false; } else { clearFieldError("f-mail"); }
+    if(!rubro){ setFieldError("f-rubro"); valid=false; } else { clearFieldError("f-rubro"); }
+
+    if(!valid){ banner.classList.add("show"); return; }
+    banner.classList.remove("show");
+
+    formData.nombre=nombre; formData.apellido=apellido; formData.provincia=provincia;
+    formData.localidad=localidad; formData.whatsapp=whatsapp; formData.mail=mail; formData.rubro=rubro;
+
+    showScreen("screen2");
+  });
+
+  // ===================== SCREEN 2 =====================
+  var solucionCards = document.querySelectorAll("#solucionCards .opt-card");
+  solucionCards.forEach(function(card){
+    card.addEventListener("click", function(){
+      solucionCards.forEach(function(c){ c.classList.remove("selected"); });
+      card.classList.add("selected");
+      formData.solucion = card.getAttribute("data-value");
+      document.getElementById("s2ErrorBanner").classList.remove("show");
+    });
+  });
+
+  document.getElementById("btnStep2Back").addEventListener("click", function(){ showScreen("screen1"); });
+
+  document.getElementById("btnStep2Next").addEventListener("click", function(){
+    if(!formData.solucion){
+      document.getElementById("s2ErrorBanner").classList.add("show");
+      return;
+    }
+    buildAplicacionList();
+    showScreen("screen3");
+  });
+
+  // ===================== SCREEN 3 (selección múltiple) =====================
+  function buildAplicacionList(){
+    formData.aplicaciones = [];
+    document.getElementById("s3Question").textContent = PREGUNTAS[formData.solucion] || "¿En qué aplicación estás interesado?";
+    var list = document.getElementById("aplicacionList");
+    list.innerHTML = "";
+    var opts = APLICACIONES[formData.solucion] || [];
+    opts.forEach(function(opt){
+      var div = document.createElement("div");
+      div.className = "opt-simple multi";
+      div.setAttribute("data-value", opt);
+      div.innerHTML = "<span>"+opt+"</span><div class='check-circle'></div>";
+      div.addEventListener("click", function(){
+        var idx = formData.aplicaciones.indexOf(opt);
+        if(idx === -1){
+          formData.aplicaciones.push(opt);
+          div.classList.add("selected");
+        }else{
+          formData.aplicaciones.splice(idx,1);
+          div.classList.remove("selected");
+        }
+        if(formData.aplicaciones.length){
+          document.getElementById("s3ErrorBanner").classList.remove("show");
+        }
+      });
+      list.appendChild(div);
+    });
+  }
+
+  document.getElementById("btnStep3Back").addEventListener("click", function(){ showScreen("screen2"); });
+
+  document.getElementById("btnStep3Next").addEventListener("click", function(){
+    if(!formData.aplicaciones.length){
+      document.getElementById("s3ErrorBanner").classList.add("show");
+      return;
+    }
+    showScreen("screen4");
+  });
+
+  // ===================== SCREEN 4: IMAGENES DE PRODUCTO =====================
+  // Si no encuentra el archivo en /images, muestra un ícono genérico de reemplazo.
+  // Para usar fotos reales: agregá una carpeta "images" junto a este archivo con
+  // matrice-4e.jpg, matrice-4t.jpg, matrice-350-rtk.jpg, dock-3.jpg, zenmuse-h30t.jpg,
+  // zenmuse-p1.jpg, zenmuse-l2.jpg y asesoramiento.jpg (o cambiá el src en el HTML).
+  var DRONE_ICON = '<svg viewBox="0 0 64 64" width="46" height="46" fill="none" stroke="currentColor" stroke-width="2"><circle cx="14" cy="14" r="7"/><circle cx="50" cy="14" r="7"/><circle cx="14" cy="50" r="7"/><circle cx="50" cy="50" r="7"/><line x1="20" y1="18" x2="28" y2="28"/><line x1="44" y1="18" x2="36" y2="28"/><line x1="20" y1="46" x2="28" y2="36"/><line x1="44" y1="46" x2="36" y2="36"/><rect x="26" y="26" width="12" height="12" rx="2"/></svg>';
+  var DOCK_ICON = '<svg viewBox="0 0 64 64" width="46" height="46" fill="none" stroke="currentColor" stroke-width="2"><rect x="10" y="20" width="44" height="32" rx="3"/><path d="M18 20 L26 8 H38 L46 20"/><line x1="10" y1="34" x2="54" y2="34"/></svg>';
+  var CAM_ICON = '<svg viewBox="0 0 64 64" width="46" height="46" fill="none" stroke="currentColor" stroke-width="2"><rect x="8" y="20" width="48" height="30" rx="4"/><circle cx="32" cy="35" r="10"/><rect x="24" y="12" width="16" height="10" rx="2"/></svg>';
+  var HELP_ICON = '<svg viewBox="0 0 64 64" width="46" height="46" fill="none" stroke="currentColor" stroke-width="2"><circle cx="32" cy="32" r="24"/><path d="M26 26c0-4 3-7 7-7s6 3 6 6c0 4-3 5-5 7-1 1-1 2-1 4" stroke-linecap="round"/><circle cx="32" cy="46" r="1.6" fill="currentColor"/></svg>';
+  var FALLBACK_ICONS = {
+    "images/matrice-4e.webp": DRONE_ICON,
+    "images/matrice-4t.png": DRONE_ICON,
+    "images/matrice-350-rtk.webp": DRONE_ICON,
+    "images/dock-3.jpg": DOCK_ICON,
+    "images/zenmuse-h30t.jpg": CAM_ICON,
+    "images/zenmuse-p1.jpg": CAM_ICON,
+    "images/zenmuse-l2.jpg": CAM_ICON,
+    "images/asesoramiento.jpg": HELP_ICON
+  };
+  window.imgFallback = function(imgEl){
+    var src = imgEl.getAttribute("src");
+    var icon = FALLBACK_ICONS[src] || DRONE_ICON;
+    var wrap = imgEl.parentElement;
+    wrap.innerHTML = "<div class='equipo-fallback'>"+icon+"</div>";
+  };
+
+  // ===================== SCREEN 4 =====================
+  var equipoOptions = document.querySelectorAll("#equipoList .equipo-card");
+  equipoOptions.forEach(function(opt){
+    opt.addEventListener("click", function(){
+      equipoOptions.forEach(function(o){ o.classList.remove("selected"); });
+      opt.classList.add("selected");
+      formData.equipo = opt.getAttribute("data-value");
+      document.getElementById("s4ErrorBanner").classList.remove("show");
+    });
+  });
+
+  document.getElementById("btnStep4Back").addEventListener("click", function(){ showScreen("screen3"); });
+
+  // Envía el lead al formulario de Netlify (queda centralizado en el dashboard del sitio, visible desde cualquier dispositivo).
+  function submitToNetlify(lead){
+    var body = new URLSearchParams();
+    body.append("form-name", "leads-hdt-newforce");
+    Object.keys(lead).forEach(function(k){ body.append(k, lead[k]); });
+    return fetch("/", {
+      method: "POST",
+      headers: {"Content-Type":"application/x-www-form-urlencoded"},
+      body: body.toString()
+    });
+  }
+
+  document.getElementById("btnSubmit").addEventListener("click", function(){
+    if(!formData.equipo){
+      document.getElementById("s4ErrorBanner").classList.add("show");
+      return;
+    }
+
+    var now = new Date();
+    var fecha = now.toLocaleString("es-AR");
+
+    var lead = {
+      fecha: fecha,
+      nombre: formData.nombre,
+      apellido: formData.apellido,
+      provincia: formData.provincia,
+      localidad: formData.localidad,
+      whatsapp: formData.whatsapp,
+      mail: formData.mail,
+      rubro: formData.rubro,
+      solucion: formData.solucion,
+      aplicacion: formData.aplicaciones.join(", "),
+      equipo: formData.equipo
+    };
+
+    addLead(lead); // backup local en este dispositivo (lo usa el panel admin propio)
+
+    submitToNetlify(lead).catch(function(err){
+      console.warn("No se pudo enviar el lead a Netlify Forms:", err);
+    });
+
+    showScreen("screenThanks");
+  });
+
+  // ===================== RESTART =====================
+  document.getElementById("btnRestart").addEventListener("click", function(){
+    formData = { nombre:"", apellido:"", provincia:"", localidad:"", whatsapp:"", mail:"", rubro:"", solucion:"", aplicaciones:[], equipo:"" };
+
+    document.getElementById("in-nombre").value="";
+    document.getElementById("in-apellido").value="";
+    document.getElementById("in-provincia").value="";
+    document.getElementById("in-localidad").value="";
+    document.getElementById("in-whatsapp").value="";
+    document.getElementById("in-mail").value="";
+    document.getElementById("in-rubro").value="";
+
+    ["f-nombre","f-apellido","f-provincia","f-localidad","f-whatsapp","f-mail","f-rubro"].forEach(clearFieldError);
+    document.getElementById("s1ErrorBanner").classList.remove("show");
+    document.getElementById("s2ErrorBanner").classList.remove("show");
+    document.getElementById("s3ErrorBanner").classList.remove("show");
+    document.getElementById("s4ErrorBanner").classList.remove("show");
+
+    solucionCards.forEach(function(c){ c.classList.remove("selected"); });
+    equipoOptions.forEach(function(o){ o.classList.remove("selected"); });
+    document.getElementById("aplicacionList").innerHTML = "";
+
+    showScreen("screen1");
+  });
+
+  // ===================== HIDDEN ADMIN ACCESS (triple tap top-left) =====================
+  var tapCount = 0;
+  var tapTimer = null;
+  document.getElementById("hiddenTapZone").addEventListener("click", function(){
+    tapCount++;
+    if(tapTimer) clearTimeout(tapTimer);
+    tapTimer = setTimeout(function(){ tapCount = 0; }, 900);
+    if(tapCount >= 3){
+      tapCount = 0;
+      document.getElementById("adminPassInput").value = "";
+      document.getElementById("adminLoginError").classList.remove("show");
+      showScreen("adminLoginScreen");
+    }
+  });
+
+  document.getElementById("btnAdminLogin").addEventListener("click", attemptAdminLogin);
+  document.getElementById("adminPassInput").addEventListener("keydown", function(e){
+    if(e.key === "Enter") attemptAdminLogin();
+  });
+
+  function attemptAdminLogin(){
+    var val = document.getElementById("adminPassInput").value;
+    if(val === ADMIN_PASSWORD){
+      document.getElementById("adminLoginError").classList.remove("show");
+      renderAdminPanel();
+      showScreen("adminScreen");
+    }else{
+      document.getElementById("adminLoginError").classList.add("show");
+    }
+  }
+
+  document.getElementById("btnAdminLogout").addEventListener("click", function(){
+    showScreen("screen1");
+  });
+
+  // ===================== ADMIN PANEL =====================
+  function uniqueValues(leads, key){
+    var set = {};
+    leads.forEach(function(l){ if(l[key]) set[l[key]] = true; });
+    return Object.keys(set).sort();
+  }
+
+  function populateFilterOptions(){
+    var leads = adminLeadsCache;
+    fillSelect("filterProvincia", uniqueValues(leads,"provincia"), "Todas las provincias");
+    fillSelect("filterRubro", uniqueValues(leads,"rubro"), "Todos los rubros");
+    fillSelect("filterSolucion", uniqueValues(leads,"solucion"), "Todas las soluciones");
+    fillSelect("filterEquipo", uniqueValues(leads,"equipo"), "Todo el equipamiento");
+  }
+
+  function fillSelect(id, values, placeholder){
+    var sel = document.getElementById(id);
+    var current = sel.value;
+    sel.innerHTML = "<option value=''>"+placeholder+"</option>";
+    values.forEach(function(v){
+      var o = document.createElement("option");
+      o.value = v; o.textContent = v;
+      sel.appendChild(o);
+    });
+    if(values.indexOf(current) !== -1) sel.value = current;
+  }
+
+  function escapeHtml(str){
+    if(str === undefined || str === null) return "";
+    return String(str).replace(/[&<>"']/g, function(c){
+      return ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"})[c];
+    });
+  }
+
+  function getFilteredLeads(){
+    var leads = adminLeadsCache;
+    var prov = document.getElementById("filterProvincia").value;
+    var rubro = document.getElementById("filterRubro").value;
+    var sol = document.getElementById("filterSolucion").value;
+    var equipo = document.getElementById("filterEquipo").value;
+    var search = document.getElementById("filterSearch").value.trim().toLowerCase();
+
+    return leads.filter(function(l){
+      if(prov && l.provincia !== prov) return false;
+      if(rubro && l.rubro !== rubro) return false;
+      if(sol && l.solucion !== sol) return false;
+      if(equipo && l.equipo !== equipo) return false;
+      if(search){
+        var hay = (l.nombre+" "+l.apellido+" "+l.mail+" "+l.whatsapp).toLowerCase();
+        if(hay.indexOf(search) === -1) return false;
+      }
+      return true;
+    });
+  }
+
+  function renderTable(){
+    var leads = getFilteredLeads();
+    var tbody = document.getElementById("leadsTbody");
+    var emptyState = document.getElementById("emptyState");
+    tbody.innerHTML = "";
+
+    if(leads.length === 0){
+      emptyState.style.display = "block";
+    }else{
+      emptyState.style.display = "none";
+      leads.slice().reverse().forEach(function(l){
+        var tr = document.createElement("tr");
+        tr.innerHTML =
+          "<td>"+escapeHtml(l.fecha)+"</td>"+
+          "<td>"+escapeHtml(l.nombre)+"</td>"+
+          "<td>"+escapeHtml(l.apellido)+"</td>"+
+          "<td>"+escapeHtml(l.provincia)+"</td>"+
+          "<td>"+escapeHtml(l.localidad)+"</td>"+
+          "<td>"+escapeHtml(l.whatsapp)+"</td>"+
+          "<td>"+escapeHtml(l.mail)+"</td>"+
+          "<td>"+escapeHtml(l.rubro)+"</td>"+
+          "<td>"+escapeHtml(l.solucion)+"</td>"+
+          "<td>"+escapeHtml(l.aplicacion)+"</td>"+
+          "<td>"+escapeHtml(l.equipo)+"</td>";
+        tbody.appendChild(tr);
+      });
+    }
+  }
+
+  function renderMetrics(){
+    var leads = adminLeadsCache;
+    document.getElementById("metricTotal").textContent = leads.length;
+
+    var today = new Date();
+    var todayStr = today.toLocaleDateString("es-AR");
+    var hoy = leads.filter(function(l){
+      return l.fecha && l.fecha.indexOf(todayStr) === 0;
+    }).length;
+    document.getElementById("metricHoy").textContent = hoy;
+  }
+
+  function renderAdminPanel(){
+    var tbody = document.getElementById("leadsTbody");
+    tbody.innerHTML = "<tr><td colspan='11' style='text-align:center; padding:30px; color:var(--gray-300);'>Cargando leads centralizados...</td></tr>";
+    document.getElementById("emptyState").style.display = "none";
+
+    getMergedLeads().then(function(leads){
+      adminLeadsCache = leads;
+      populateFilterOptions();
+      renderMetrics();
+      renderTable();
+    });
+  }
+
+  ["filterProvincia","filterRubro","filterSolucion","filterEquipo"].forEach(function(id){
+    document.getElementById(id).addEventListener("change", renderTable);
+  });
+  document.getElementById("filterSearch").addEventListener("input", renderTable);
+
+  document.getElementById("btnRefresh").addEventListener("click", renderAdminPanel);
+
+  document.getElementById("btnDeleteTest").addEventListener("click", function(){
+    if(!confirm("¿Seguro querés borrar los registros de prueba?")) return;
+    if(!confirm("Esta acción borrará TODOS los leads guardados, locales y centralizados en Netlify. ¿Confirmás de nuevo?")) return;
+
+    var idsToDelete = adminLeadsCache.filter(function(l){ return l.id; }).map(function(l){ return l.id; });
+
+    saveLeads([]); // borra la copia local de este dispositivo
+
+    if(idsToDelete.length){
+      fetch("/.netlify/functions/delete-leads", {
+        method: "POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({ ids: idsToDelete })
+      }).catch(function(err){
+        console.warn("No se pudieron borrar los leads centralizados:", err);
+      }).then(function(){
+        renderAdminPanel();
+      });
+    }else{
+      renderAdminPanel();
+    }
+  });
+
+  document.getElementById("btnExcel").addEventListener("click", function(){
+    var leads = getFilteredLeads();
+    if(leads.length === 0){
+      alert("No hay leads para exportar.");
+      return;
+    }
+    var rows = leads.map(function(l){
+      return {
+        "Fecha": l.fecha,
+        "Nombre": l.nombre,
+        "Apellido": l.apellido,
+        "Provincia": l.provincia,
+        "Localidad": l.localidad,
+        "WhatsApp": l.whatsapp,
+        "Mail": l.mail,
+        "Rubro": l.rubro,
+        "Solución de interés": l.solucion,
+        "Aplicación específica": l.aplicacion,
+        "Equipamiento de interés": l.equipo
+      };
+    });
+    var ws = XLSX.utils.json_to_sheet(rows);
+    var wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Leads");
+    XLSX.writeFile(wb, "leads-hdt-newforce.xlsx");
+  });
+
+})();
+</script>
+</body>
+</html>
