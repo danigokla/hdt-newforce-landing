@@ -86,6 +86,18 @@
 
   .row-2{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
 
+  /* Autocomplete provincia */
+  .autocomplete-wrap{position:relative;}
+  .autocomplete-list{
+    display:none; position:absolute; top:calc(100% + 6px); left:0; right:0; z-index:40;
+    max-height:220px; overflow-y:auto; background:#141414; border:1px solid var(--card-border);
+    border-radius:var(--radius-sm); box-shadow:0 12px 28px rgba(0,0,0,0.5);
+  }
+  .autocomplete-list.show{display:block;}
+  .autocomplete-item{padding:11px 14px; font-size:14.5px; color:var(--white); cursor:pointer;}
+  .autocomplete-item.active, .autocomplete-item:hover{background:rgba(255,255,255,0.08);}
+  .autocomplete-empty{padding:11px 14px; font-size:13px; color:var(--gray-300);}
+
   .cards-grid{display:flex; flex-direction:column; gap:12px; margin-bottom:8px;}
   .opt-card{
     position:relative; border-radius:var(--radius); overflow:hidden;
@@ -267,34 +279,11 @@
     <div class="row-2">
       <div class="field" id="f-provincia">
         <label>Provincia *</label>
-        <select id="in-provincia">
-          <option value="">Seleccioná tu provincia</option>
-          <option>Buenos Aires</option>
-          <option>Ciudad Autónoma de Buenos Aires</option>
-          <option>Catamarca</option>
-          <option>Chaco</option>
-          <option>Chubut</option>
-          <option>Córdoba</option>
-          <option>Corrientes</option>
-          <option>Entre Ríos</option>
-          <option>Formosa</option>
-          <option>Jujuy</option>
-          <option>La Pampa</option>
-          <option>La Rioja</option>
-          <option>Mendoza</option>
-          <option>Misiones</option>
-          <option>Neuquén</option>
-          <option>Río Negro</option>
-          <option>Salta</option>
-          <option>San Juan</option>
-          <option>San Luis</option>
-          <option>Santa Cruz</option>
-          <option>Santa Fe</option>
-          <option>Santiago del Estero</option>
-          <option>Tierra del Fuego</option>
-          <option>Tucumán</option>
-        </select>
-        <div class="field-error">Seleccioná tu provincia.</div>
+        <div class="autocomplete-wrap">
+          <input type="text" id="in-provincia" placeholder="Empezá a escribir tu provincia" autocomplete="off">
+          <div class="autocomplete-list" id="provinciaList"></div>
+        </div>
+        <div class="field-error">Elegí tu provincia de la lista.</div>
       </div>
       <div class="field" id="f-localidad">
         <label>Localidad *</label>
@@ -631,6 +620,118 @@
   function setFieldError(fieldId){
     document.getElementById(fieldId).classList.add("has-error");
   }
+
+  // ===================== AUTOCOMPLETE PROVINCIA =====================
+  var PROVINCIAS = ["Buenos Aires","Ciudad Autónoma de Buenos Aires","Catamarca","Chaco","Chubut","Córdoba","Corrientes","Entre Ríos","Formosa","Jujuy","La Pampa","La Rioja","Mendoza","Misiones","Neuquén","Río Negro","Salta","San Juan","San Luis","Santa Cruz","Santa Fe","Santiago del Estero","Tierra del Fuego","Tucumán"];
+  var PROVINCIA_ALIASES = {
+    "Ciudad Autónoma de Buenos Aires": ["caba", "capital federal", "capital"]
+  };
+
+  function normalizeText(s){
+    return (s || "").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim();
+  }
+
+  (function setupProvinciaAutocomplete(){
+    var input = document.getElementById("in-provincia");
+    var list = document.getElementById("provinciaList");
+    var wrap = document.getElementById("f-provincia");
+    var activeIndex = -1;
+    var currentMatches = [];
+
+    function closeList(){
+      list.innerHTML = "";
+      list.classList.remove("show");
+      activeIndex = -1;
+      currentMatches = [];
+    }
+
+    function updateActive(){
+      Array.prototype.forEach.call(list.children, function(el,i){
+        el.classList.toggle("active", i === activeIndex);
+      });
+      if(list.children[activeIndex]) list.children[activeIndex].scrollIntoView({block:"nearest"});
+    }
+
+    function renderList(matches){
+      currentMatches = matches;
+      activeIndex = -1;
+      if(!matches.length){
+        list.innerHTML = '<div class="autocomplete-empty">Sin resultados</div>';
+        list.classList.add("show");
+        return;
+      }
+      list.innerHTML = matches.map(function(p){
+        return '<div class="autocomplete-item" data-value="'+p+'">'+p+'</div>';
+      }).join("");
+      list.classList.add("show");
+    }
+
+    function filterProvincias(query){
+      var q = normalizeText(query);
+      if(!q) return PROVINCIAS.slice();
+      return PROVINCIAS.filter(function(p){
+        if(normalizeText(p).indexOf(q) !== -1) return true;
+        var aliases = PROVINCIA_ALIASES[p] || [];
+        return aliases.some(function(a){ return normalizeText(a).indexOf(q) !== -1; });
+      });
+    }
+
+    function selectProvincia(value){
+      input.value = value;
+      closeList();
+      clearFieldError("f-provincia");
+    }
+
+    input.addEventListener("input", function(){
+      clearFieldError("f-provincia");
+      renderList(filterProvincias(input.value));
+    });
+
+    input.addEventListener("focus", function(){
+      renderList(filterProvincias(input.value));
+    });
+
+    input.addEventListener("keydown", function(e){
+      if(!list.classList.contains("show")) return;
+      if(e.key === "ArrowDown"){
+        e.preventDefault();
+        activeIndex = Math.min(activeIndex+1, currentMatches.length-1);
+        updateActive();
+      } else if(e.key === "ArrowUp"){
+        e.preventDefault();
+        activeIndex = Math.max(activeIndex-1, 0);
+        updateActive();
+      } else if(e.key === "Enter"){
+        if(activeIndex >= 0 && currentMatches[activeIndex]){
+          e.preventDefault();
+          selectProvincia(currentMatches[activeIndex]);
+        }
+      } else if(e.key === "Escape"){
+        closeList();
+      }
+    });
+
+    list.addEventListener("mousedown", function(e){
+      var item = e.target.closest(".autocomplete-item");
+      if(!item) return;
+      e.preventDefault();
+      selectProvincia(item.getAttribute("data-value"));
+    });
+
+    input.addEventListener("blur", function(){
+      setTimeout(function(){
+        closeList();
+        var typed = input.value.trim();
+        if(!typed) return;
+        var match = PROVINCIAS.filter(function(p){ return normalizeText(p) === normalizeText(typed); })[0];
+        if(match){ input.value = match; }
+      }, 150);
+    });
+
+    document.addEventListener("click", function(e){
+      if(!wrap.contains(e.target)){ closeList(); }
+    });
+  })();
 
   function validateEmail(email){
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
