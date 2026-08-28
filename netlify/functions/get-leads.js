@@ -48,6 +48,7 @@ exports.handler = async function (event, context) {
       fechaISO: s.created_at,
       nombre: s.data.nombre || "",
       apellido: s.data.apellido || "",
+      empresa: s.data.empresa || "",
       provincia: s.data.provincia || "",
       localidad: s.data.localidad || "",
       whatsapp: s.data.whatsapp || "",
