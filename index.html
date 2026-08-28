@@ -254,8 +254,8 @@
     <img src="logo-hdt.svg" alt="HDT NewForce" class="brand-logo">
     <div class="brand-row"><div class="brand-dot"></div><div class="brand-name">Representantes Oficiales de DJI Enterprise</div></div>
     <div class="progress-wrap">
-      <div class="progress-label">Paso 1 de 4</div>
-      <div class="progress-bar"><div class="progress-fill" style="width:25%"></div></div>
+      <div class="progress-label">Paso 1 de 3</div>
+      <div class="progress-bar"><div class="progress-fill" style="width:33%"></div></div>
     </div>
     <span class="hero-tag">DJI Enterprise</span>
     <h1>Tecnología DJI Enterprise para llevar tus operaciones al próximo nivel</h1>
@@ -286,7 +286,7 @@
         <div class="field-error">Elegí tu provincia de la lista.</div>
       </div>
       <div class="field" id="f-localidad">
-        <label>Localidad *</label>
+        <label>Localidad / Municipio</label>
         <input type="text" id="in-localidad" placeholder="Ej: La Plata">
         <div class="field-error">Ingresá tu localidad.</div>
       </div>
@@ -332,8 +332,8 @@
   <section class="screen" id="screen2">
     <div class="brand-row"><div class="brand-dot"></div><div class="brand-name">HDT NewForce</div></div>
     <div class="progress-wrap">
-      <div class="progress-label">Paso 2 de 4</div>
-      <div class="progress-bar"><div class="progress-fill" style="width:50%"></div></div>
+      <div class="progress-label">Paso 2 de 3</div>
+      <div class="progress-bar"><div class="progress-fill" style="width:66%"></div></div>
     </div>
     <h2 class="step-title">¿Qué tipo de solución estás buscando?</h2>
     <p class="step-sub">Elegí la categoría que mejor se ajusta a tu operación.</p>
@@ -357,7 +357,7 @@
         <div class="card-content">
           <div>
             <div class="opt-title">Geoespacial</div>
-            <div class="opt-desc">Mapeo, relevamientos y modelos 2D/3D.</div>
+            <div class="opt-desc">Mapeo, minería, planificación urbana.</div>
           </div>
           <div class="check-circle"></div>
         </div>
@@ -368,7 +368,7 @@
         <div class="card-content">
           <div>
             <div class="opt-title">Inspecciones</div>
-            <div class="opt-desc">Activos, estructuras, energía e infraestructura.</div>
+            <div class="opt-desc">Energía, Oil & Gas e infraestructura crítica (puentes, grandes obras).</div>
           </div>
           <div class="check-circle"></div>
         </div>
@@ -381,30 +381,11 @@
     </div>
   </section>
 
-  <!-- SCREEN 3: Aplicación específica -->
-  <section class="screen" id="screen3">
-    <div class="brand-row"><div class="brand-dot"></div><div class="brand-name">HDT NewForce</div></div>
-    <div class="progress-wrap">
-      <div class="progress-label">Paso 3 de 4</div>
-      <div class="progress-bar"><div class="progress-fill" style="width:75%"></div></div>
-    </div>
-    <h2 class="step-title" id="s3Question">¿En qué aplicación estás interesado?</h2>
-    <p class="step-sub">Podés seleccionar una o más opciones.</p>
-    <div class="error-banner" id="s3ErrorBanner">Seleccioná al menos una opción para continuar.</div>
-
-    <div class="simple-list" id="aplicacionList"></div>
-
-    <div class="btn-group">
-      <button class="btn btn-secondary" id="btnStep3Back">Volver</button>
-      <button class="btn btn-primary" id="btnStep3Next">Continuar</button>
-    </div>
-  </section>
-
   <!-- SCREEN 4: Equipamiento -->
   <section class="screen" id="screen4">
     <div class="brand-row"><div class="brand-dot"></div><div class="brand-name">HDT NewForce</div></div>
     <div class="progress-wrap">
-      <div class="progress-label">Paso 4 de 4</div>
+      <div class="progress-label">Paso 3 de 3</div>
       <div class="progress-bar"><div class="progress-fill" style="width:100%"></div></div>
     </div>
     <h2 class="step-title">¿Sobre qué equipamiento querés recibir información?</h2>
@@ -538,27 +519,6 @@
   // ===================== CONFIG =====================
   var ADMIN_PASSWORD = "HDT2026"; // cambiar acá la clave de acceso al panel admin
   var STORAGE_KEY = "hdt_newforce_leads";
-
-  // ===================== APLICACIONES POR SOLUCION =====================
-  var APLICACIONES = {
-    "Seguridad": [
-      "Vigilancia y patrullaje","Centros de monitoreo","Primera respuesta","Patrullaje automatizado",
-      "Lucha contra el fuego","Defensa civil","Búsqueda y rescate","Reconstrucción de escena"
-    ],
-    "Geoespacial": [
-      "Topografía y mapeo","Reconocimiento de campos","Relevamiento catastral","Planificación urbana",
-      "Monitoreo de obras","Movimiento de suelo / terraplén","Minería","Modelos 2D / 3D"
-    ],
-    "Inspecciones": [
-      "Energía eléctrica","Subestaciones","Tendidos eléctricos","Oil & Gas","Gasoductos / oleoductos",
-      "Instalaciones industriales","Paneles solares","Parques eólicos","Puentes","Techos / infraestructura civil"
-    ]
-  };
-  var PREGUNTAS = {
-    "Seguridad":"¿En qué aplicación estás interesado?",
-    "Geoespacial":"¿Qué tipo de relevamiento necesitás hacer?",
-    "Inspecciones":"¿Qué tipo de inspección te interesa?"
-  };
 
   // ===================== STATE =====================
   var formData = {
@@ -753,7 +713,7 @@
     var valid = true;
     var banner = document.getElementById("s1ErrorBanner");
 
-    [["f-nombre",nombre],["f-apellido",apellido],["f-provincia",provincia],["f-localidad",localidad]].forEach(function(pair){
+    [["f-nombre",nombre],["f-apellido",apellido],["f-provincia",provincia]].forEach(function(pair){
       if(!pair[1]){ setFieldError(pair[0]); valid=false; } else { clearFieldError(pair[0]); }
     });
 
@@ -786,46 +746,6 @@
   document.getElementById("btnStep2Next").addEventListener("click", function(){
     if(!formData.solucion){
       document.getElementById("s2ErrorBanner").classList.add("show");
-      return;
-    }
-    buildAplicacionList();
-    showScreen("screen3");
-  });
-
-  // ===================== SCREEN 3 (selección múltiple) =====================
-  function buildAplicacionList(){
-    formData.aplicaciones = [];
-    document.getElementById("s3Question").textContent = PREGUNTAS[formData.solucion] || "¿En qué aplicación estás interesado?";
-    var list = document.getElementById("aplicacionList");
-    list.innerHTML = "";
-    var opts = APLICACIONES[formData.solucion] || [];
-    opts.forEach(function(opt){
-      var div = document.createElement("div");
-      div.className = "opt-simple multi";
-      div.setAttribute("data-value", opt);
-      div.innerHTML = "<span>"+opt+"</span><div class='check-circle'></div>";
-      div.addEventListener("click", function(){
-        var idx = formData.aplicaciones.indexOf(opt);
-        if(idx === -1){
-          formData.aplicaciones.push(opt);
-          div.classList.add("selected");
-        }else{
-          formData.aplicaciones.splice(idx,1);
-          div.classList.remove("selected");
-        }
-        if(formData.aplicaciones.length){
-          document.getElementById("s3ErrorBanner").classList.remove("show");
-        }
-      });
-      list.appendChild(div);
-    });
-  }
-
-  document.getElementById("btnStep3Back").addEventListener("click", function(){ showScreen("screen2"); });
-
-  document.getElementById("btnStep3Next").addEventListener("click", function(){
-    if(!formData.aplicaciones.length){
-      document.getElementById("s3ErrorBanner").classList.add("show");
       return;
     }
     showScreen("screen4");
@@ -868,7 +788,7 @@
     });
   });
 
-  document.getElementById("btnStep4Back").addEventListener("click", function(){ showScreen("screen3"); });
+  document.getElementById("btnStep4Back").addEventListener("click", function(){ showScreen("screen2"); });
 
   // Envía el lead al formulario de Netlify (queda centralizado en el dashboard del sitio, visible desde cualquier dispositivo).
   function submitToNetlify(lead){
@@ -935,12 +855,10 @@
     ["f-nombre","f-apellido","f-provincia","f-localidad","f-whatsapp","f-mail","f-rubro"].forEach(clearFieldError);
     document.getElementById("s1ErrorBanner").classList.remove("show");
     document.getElementById("s2ErrorBanner").classList.remove("show");
-    document.getElementById("s3ErrorBanner").classList.remove("show");
     document.getElementById("s4ErrorBanner").classList.remove("show");
 
     solucionCards.forEach(function(c){ c.classList.remove("selected"); });
     equipoOptions.forEach(function(o){ o.classList.remove("selected"); });
-    document.getElementById("aplicacionList").innerHTML = "";
 
     showScreen("screen1");
   });
