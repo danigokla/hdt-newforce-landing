@@ -1175,10 +1175,11 @@ function _fillFromQR(raw){
   else{alert('QR leído, pero el formato no es compatible. Ingresá los datos a mano.');return;}
   var nombre=(parts[0]||'').trim();
   var apellido=(parts[1]||'').trim();
+  var empresa=(parts[2]||'').trim();
   var telefono=(parts[4]||'').trim();
   var email=(parts[5]||'').trim();
   if(!email||email.indexOf('@')===-1){email='';for(var i=0;i<parts.length;i++){if(parts[i].indexOf('@')!==-1){email=parts[i].trim();break;}}}
-  _applyQRFields({nombre:nombre,apellido:apellido,whatsapp:telefono,mail:email});
+  _applyQRFields({nombre:nombre,apellido:apellido,empresa:empresa,whatsapp:telefono,mail:email});
 }
 function _fillVcardOrJson(c){
   var data={};
@@ -1202,6 +1203,7 @@ function _applyQRFields(data){
     filled++;
   }
   fill('in-nombre',data.nombre);fill('in-apellido',data.apellido);
+  fill('in-empresa',data.empresa);
   fill('in-whatsapp',data.whatsapp);fill('in-mail',data.mail);
   if(filled>0)document.getElementById('qrFilledBadge').classList.add('show');
   else alert('El QR fue leído, pero no se encontraron datos para completar automáticamente.');
