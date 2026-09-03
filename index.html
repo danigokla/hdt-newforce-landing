@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>HDT NewForce | Soluciones DJI Enterprise</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 <style>
   :root{
     --bg-1:#000000;
@@ -225,6 +226,63 @@
   @media (min-width:680px){
     h1{font-size:30px;}
   }
+
+  /* ── QR Scanner ─────────────────────────────────────── */
+  .btn-scan-qr{
+    width:100%; padding:14px 18px; border-radius:14px;
+    border:1px solid var(--card-border);
+    background:rgba(255,255,255,0.06); color:var(--white);
+    font-size:15px; font-weight:700; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    gap:10px; margin-bottom:16px; transition:all .2s;
+  }
+  .btn-scan-qr:hover{background:rgba(255,255,255,0.11); border-color:rgba(255,255,255,0.32);}
+  .btn-scan-qr svg{width:20px; height:20px; flex-shrink:0;}
+  #qrModal{
+    display:none; position:fixed; inset:0; z-index:10000;
+    background:#000; flex-direction:column;
+    align-items:center; justify-content:center;
+  }
+  #qrModal.open{display:flex;}
+  .qr-overlay-wrap{position:relative; width:100%; max-width:480px;}
+  #qrVideo{width:100%; display:block;}
+  #qrCanvas{display:none;}
+  .qr-frame-box{
+    position:absolute; inset:0; display:flex;
+    align-items:center; justify-content:center; pointer-events:none;
+  }
+  .qr-frame{
+    width:220px; height:220px; border-radius:16px;
+    border:2px solid rgba(255,255,255,0.75);
+    box-shadow:0 0 0 9999px rgba(0,0,0,0.5);
+    position:relative;
+  }
+  .qr-scan-line{
+    position:absolute; left:0; right:0; top:0;
+    height:2px; background:rgba(255,255,255,0.9);
+    animation:qrScan 1.8s linear infinite;
+  }
+  @keyframes qrScan{0%{top:0;}50%{top:calc(100% - 2px);}100%{top:0;}}
+  .qr-hint{
+    color:rgba(255,255,255,0.75); font-size:13px;
+    text-align:center; padding:14px 20px; line-height:1.5;
+  }
+  .btn-qr-cancel{
+    padding:12px 36px; border-radius:12px;
+    border:1px solid rgba(255,255,255,0.28);
+    background:transparent; color:#fff; font-size:15px; cursor:pointer;
+  }
+  .qr-filled-badge{
+    display:none; align-items:center; gap:8px;
+    font-size:12.5px; color:var(--success); font-weight:700;
+    background:rgba(33,208,122,0.08); border:1px solid rgba(33,208,122,0.28);
+    padding:9px 14px; border-radius:10px; margin-bottom:14px;
+  }
+  .qr-filled-badge.show{display:flex;}
+  input.qr-auto{
+    border-color:rgba(33,208,122,0.45) !important;
+    background:rgba(33,208,122,0.04) !important;
+  }
 </style>
 </head>
 <body>
@@ -263,6 +321,17 @@
     <p class="subtitle">HDT NewForce acerca soluciones con drones profesionales para seguridad, geoespacial e inspecciones críticas. Dejanos tus datos y un especialista te contactará para asesorarte.</p>
 
     <div class="error-banner" id="s1ErrorBanner">Completá todos los campos obligatorios para continuar.</div>
+
+    <button class="btn-scan-qr" onclick="openQRModal()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/>
+        <rect x="7" y="7" width="10" height="10" rx="1"/>
+      </svg>
+      Escanear credencial QR
+    </button>
+    <div class="qr-filled-badge" id="qrFilledBadge">
+      <span>✓</span> Datos cargados desde el QR — completá los campos restantes
+    </div>
 
     <div class="row-2">
       <div class="field" id="f-nombre">
@@ -1050,6 +1119,93 @@
   });
 
 })();
+</script>
+
+<div id="qrModal">
+  <div class="qr-overlay-wrap">
+    <video id="qrVideo" autoplay playsinline muted></video>
+    <canvas id="qrCanvas"></canvas>
+    <div class="qr-frame-box">
+      <div class="qr-frame"><div class="qr-scan-line"></div></div>
+    </div>
+  </div>
+  <p class="qr-hint">Apuntá la cámara al código QR de la credencial de Intersec</p>
+  <button class="btn-qr-cancel" onclick="closeQRModal()">Cancelar</button>
+</div>
+
+<script>
+var _qrStream=null,_qrInterval=null;
+function openQRModal(){
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){alert('Tu navegador no soporta acceso a la cámara.');return;}
+  document.getElementById('qrModal').classList.add('open');
+  navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1280}}})
+  .then(function(s){
+    _qrStream=s;
+    var v=document.getElementById('qrVideo');
+    v.srcObject=s; v.play(); _startQRDecode();
+  }).catch(function(e){closeQRModal();alert('No se pudo acceder a la cámara: '+(e.message||e));});
+}
+function closeQRModal(){
+  clearInterval(_qrInterval);_qrInterval=null;
+  if(_qrStream){_qrStream.getTracks().forEach(function(t){t.stop();});_qrStream=null;}
+  document.getElementById('qrModal').classList.remove('open');
+}
+function _startQRDecode(){
+  var v=document.getElementById('qrVideo'),c=document.getElementById('qrCanvas'),ctx=c.getContext('2d');
+  _qrInterval=setInterval(function(){
+    if(v.readyState!==v.HAVE_ENOUGH_DATA)return;
+    c.width=v.videoWidth;c.height=v.videoHeight;
+    ctx.drawImage(v,0,0,c.width,c.height);
+    var d=ctx.getImageData(0,0,c.width,c.height);
+    var code=jsQR(d.data,d.width,d.height,{inversionAttempts:'dontInvert'});
+    if(code&&code.data){clearInterval(_qrInterval);_qrInterval=null;closeQRModal();_fillFromQR(code.data);}
+  },150);
+}
+function _tryB64(s){
+  s=s.trim();
+  if(!/^[A-Za-z0-9+/\r\n]+=*$/.test(s))return null;
+  try{var d=atob(s),ok=0;for(var i=0;i<Math.min(d.length,50);i++){var c=d.charCodeAt(i);if(c>=32&&c<127)ok++;}return(ok/Math.min(d.length,50)>0.7)?d:null;}catch(e){return null;}
+}
+function _fillFromQR(raw){
+  var content=_tryB64(raw.trim())||raw.trim();
+  var parts;
+  if(content.indexOf('#|#')!==-1)parts=content.split('#|#');
+  else if(content.indexOf('|')!==-1)parts=content.split('|');
+  else if(content.startsWith('BEGIN:VCARD')||content.charAt(0)==='{'){_fillVcardOrJson(content);return;}
+  else{alert('QR leído, pero el formato no es compatible. Ingresá los datos a mano.');return;}
+  var nombre=(parts[0]||'').trim();
+  var apellido=(parts[1]||'').trim();
+  var telefono=(parts[4]||'').trim();
+  var email=(parts[5]||'').trim();
+  if(!email||email.indexOf('@')===-1){email='';for(var i=0;i<parts.length;i++){if(parts[i].indexOf('@')!==-1){email=parts[i].trim();break;}}}
+  _applyQRFields({nombre:nombre,apellido:apellido,whatsapp:telefono,mail:email});
+}
+function _fillVcardOrJson(c){
+  var data={};
+  if(c.startsWith('BEGIN:VCARD')){
+    c.split(/\r?\n/).forEach(function(l){var m;
+      if((m=l.match(/^N:([^;]*);([^;]*)/i))){data.apellido=m[1].trim();data.nombre=m[2].trim();}
+      if((m=l.match(/^EMAIL[^:]*:(.+)/i)))data.mail=m[1].trim();
+      if((m=l.match(/^TEL[^:]*:(.+)/i)))data.whatsapp=m[1].trim();
+    });
+  }else{try{var o=JSON.parse(c);data.nombre=o.nombre||o.name||o.firstName||'';data.apellido=o.apellido||o.lastName||o.surname||'';data.mail=o.email||o.mail||'';data.whatsapp=o.telefono||o.phone||o.tel||'';}catch(e){}}
+  _applyQRFields(data);
+}
+function _applyQRFields(data){
+  var filled=0;
+  function fill(id,val){
+    if(!val)return;var el=document.getElementById(id);if(!el)return;
+    var ex=el.value.trim();
+    if(ex&&ex!==val){if(!confirm('El campo ya tiene datos.\nActual: '+ex+'\nQR: '+val+'\n\n¿Reemplazar?'))return;}
+    el.value=val;el.classList.add('qr-auto');
+    var p=el.closest('.field');if(p)p.classList.remove('has-error');
+    filled++;
+  }
+  fill('in-nombre',data.nombre);fill('in-apellido',data.apellido);
+  fill('in-whatsapp',data.whatsapp);fill('in-mail',data.mail);
+  if(filled>0)document.getElementById('qrFilledBadge').classList.add('show');
+  else alert('El QR fue leído, pero no se encontraron datos para completar automáticamente.');
+}
 </script>
 </body>
 </html>
